@@ -4,6 +4,10 @@ title: "About"
 
 About this site
 
-```{r}
-1 + 1
-```
+Hi! My name is Gurpreet. I am a senior studying Management and International Business and Management with a minor in Data Science.
+
+I'm passionate about luxury fashion industry and I enjoy working on data driven projects to see how businesses can create a competitive advantage with this across globe.
+
+In my free time I enjoy reading novels, traveling and dancing.
+
+Through this portfolio, I want to showcase my coursework, projects, skills and professional development.
