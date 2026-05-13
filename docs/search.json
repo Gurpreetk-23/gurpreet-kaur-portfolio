@@ -47,5 +47,61 @@
     "title": "Gurpreet Kaur",
     "section": "Skills",
     "text": "Skills\nBusiness strategy, market research, and analytics with strengths in data visualization, leadership, cross-functional collaboration, and community engagement."
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html",
+    "href": "imdb-project/portfolio_final.html",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "",
+    "text": "This project uses publicly available data from IMDb (Internet Movie Database), one of the most comprehensive sources of movie information in the world. Two datasets were combined for this analysis:\n\ntitle.basics — contains information about each title including type (movie, TV show, etc.), release year, runtime, and genre.\ntitle.ratings — contains the average audience rating and total number of votes for each title.\n\nThe key variables used in this analysis are:\n\nprimary_title — movie title\nstart_year — year of release (numeric)\nruntime_minutes — length of the movie in minutes (numeric)\ngenres — one or more genre categories (e.g., Drama, Comedy, Action)\naverage_rating — IMDb audience rating on a 1–10 scale (numeric)\nnum_votes — total number of user ratings, used as a measure of popularity (numeric)\n\nThe central research questions are:\n\nDo certain genres consistently receive higher audience ratings?\nIs there a relationship between a movie’s popularity (votes) and its rating?\nHow has movie production volume changed over time?\nDoes runtime have any relationship with audience rating?"
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html#data-description",
+    "href": "imdb-project/portfolio_final.html#data-description",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "",
+    "text": "This project uses publicly available data from IMDb (Internet Movie Database), one of the most comprehensive sources of movie information in the world. Two datasets were combined for this analysis:\n\ntitle.basics — contains information about each title including type (movie, TV show, etc.), release year, runtime, and genre.\ntitle.ratings — contains the average audience rating and total number of votes for each title.\n\nThe key variables used in this analysis are:\n\nprimary_title — movie title\nstart_year — year of release (numeric)\nruntime_minutes — length of the movie in minutes (numeric)\ngenres — one or more genre categories (e.g., Drama, Comedy, Action)\naverage_rating — IMDb audience rating on a 1–10 scale (numeric)\nnum_votes — total number of user ratings, used as a measure of popularity (numeric)\n\nThe central research questions are:\n\nDo certain genres consistently receive higher audience ratings?\nIs there a relationship between a movie’s popularity (votes) and its rating?\nHow has movie production volume changed over time?\nDoes runtime have any relationship with audience rating?"
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html#data-cleaning",
+    "href": "imdb-project/portfolio_final.html#data-cleaning",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "Data Cleaning",
+    "text": "Data Cleaning\nThe following code reads the raw IMDb data directly from source and cleans it. These chunks are set to eval: false so the data is not re-downloaded every time this document is rendered — the cleaned files saved to data-clean/ are used instead.\nThe data cleaning steps performed on the raw IMDb data include:\n\nFiltering: Only movies were kept (TV shows, short films, and other types were removed). Records with missing values in key variables were also excluded, as were films released before 1920 or after 2024.\nJoining: The basics and ratings datasets were merged using the shared title identifier (tconst), combining movie characteristics with audience ratings in a single table.\nType conversion: Release year, runtime, rating, and vote count were converted from text to numbers so they could be used in calculations and visualizations.\nNew variables: Three new grouping variables were created — decade of release, a popularity category based on vote counts (Low / Medium / High), and a rating category (Low Rated / Medium Rated / High Rated).\nPivoting (separating rows): Because each movie can belong to multiple genres, the genre column was expanded so each movie–genre combination has its own row. This allows genre-level comparisons.\nRemoving duplicates: Duplicate records were removed from both the main and genre-level datasets."
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html#visualization-1-rating-distribution-by-genre",
+    "href": "imdb-project/portfolio_final.html#visualization-1-rating-distribution-by-genre",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "Visualization 1: Rating Distribution by Genre",
+    "text": "Visualization 1: Rating Distribution by Genre\nNot all movie genres are created equal when it comes to audience appreciation.The chart below shows how ratings are spread within each of the most common genres using only genres with at least 2,000 movies to ensure meaningful comparisons. Genres like Documentary and Biography tend to cluster toward higher ratings, while Horror shows a wider spread with many low-rated films pulling its median down."
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html#visualization-2-movie-production-over-time",
+    "href": "imdb-project/portfolio_final.html#visualization-2-movie-production-over-time",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "Visualization 2: Movie Production Over Time",
+    "text": "Visualization 2: Movie Production Over Time\nThe movie industry has changed dramatically over the past century. This line chart tracks how many movies were released each decade from the 1920s onward. Production was slow in the early era of cinema and grew steadily through the mid-20th century. The most striking pattern is the explosive growth in more recent decades. The 2000s and 2010s show the highest production volumes ever recorded, likely reflecting both the globalization of filmmaking and the rise of streaming platforms expanding demand for content."
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html#visualization-3-popularity-vs.-rating",
+    "href": "imdb-project/portfolio_final.html#visualization-3-popularity-vs.-rating",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "Visualization 3: Popularity vs. Rating",
+    "text": "Visualization 3: Popularity vs. Rating\nDoes a movie becoming popular mean it’s actually good? This scatter plot compares the number of audience votes (a proxy for how widely-seen a movie is) with its average rating. Each point represents a movie, colored by popularity group. Votes are shown on a logarithmic scale because the data ranges from just a handful to millions. The plot shows that low-popularity movies (purple, left) are spread across all rating levels, some great, some terrible. As movies get more votes (moving right), they tend to cluster between ratings 6–8. So popularity doesn’t guarantee quality, but widely-seen movies rarely score very low"
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html#visualization-4-runtime-and-audience-ratings",
+    "href": "imdb-project/portfolio_final.html#visualization-4-runtime-and-audience-ratings",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "Visualization 4: Runtime and Audience Ratings",
+    "text": "Visualization 4: Runtime and Audience Ratings\nIs there a sweet spot for how long a movie should be? This visualization uses jittered points to show how runtime relates to audience ratings, focusing on movies between 60 and 210 minutes (the vast majority of mainstream films). A smoothed trend line shows the general pattern. Movies shorter than about 80 minutes tend to receive more varied and slightly lower ratings, while films in the 90–150 minute range earn some of the highest scores. Very long films (over 180 minutes) also tend to rate highly, possibly because audiences seek them out specifically but the sample is smaller."
+  },
+  {
+    "objectID": "imdb-project/portfolio_final.html#conclusion",
+    "href": "imdb-project/portfolio_final.html#conclusion",
+    "title": "IMDb Movie Analysis: What Makes a Movie Successful?",
+    "section": "Conclusion",
+    "text": "Conclusion\nThis analysis of IMDb data reveals several interesting patterns in the movie industry:\n\nGenre matters for ratings: Documentary and Biography films tend to earn the highest median ratings, while Horror and Thriller genres show much more variation, including many lower-rated films.\nFilm production has exploded over time, 2000s and 2010s produced far more movies than any previous era through a trend driven by globalization and digital distribution.\nPopular movies cluster in a quality band: Widely-seen films (high vote counts) consistently earn ratings between 6 and 8, while obscure films show much wider variation in quality.\nRuntime has a modest relationship with ratings: Movies in the 90–150 minute range tend to perform best with audiences, while very short films and very long films occupy niche positions.\n\nThese findings could help filmmakers, studios, and streaming platforms make more informed decisions about content strategy though of course, success in film is shaped by many factors beyond what this dataset captures, such as marketing, cast, and cultural timing."
   }
 ]

@@ -1,0 +1,289 @@
+---
+title: "IMDb Movie Analysis: What Makes a Movie Successful?"
+author: "Gurpreet Kaur"
+format:
+  html:
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  message: false
+
+---
+
+## Data Description
+
+This project uses publicly available data from [IMDb (Internet Movie Database)](https://datasets.imdbws.com/), 
+one of the most comprehensive sources of movie information in the world. Two datasets were combined for 
+this analysis:
+
+- **title.basics** — contains information about each title including type (movie, TV show, etc.), 
+  release year, runtime, and genre.
+- **title.ratings** — contains the average audience rating and total number of votes for each title.
+
+The key variables used in this analysis are:
+
+- `primary_title` — movie title
+- `start_year` — year of release (numeric)
+- `runtime_minutes` — length of the movie in minutes (numeric)
+- `genres` — one or more genre categories (e.g., Drama, Comedy, Action)
+- `average_rating` — IMDb audience rating on a 1–10 scale (numeric)
+- `num_votes` — total number of user ratings, used as a measure of popularity (numeric)
+
+The central research questions are:
+
+1. Do certain genres consistently receive higher audience ratings?
+2. Is there a relationship between a movie's popularity (votes) and its rating?
+3. How has movie production volume changed over time?
+4. Does runtime have any relationship with audience rating?
+
+---
+
+## Data Cleaning
+
+```{r}
+#| label: load-packages
+
+library(tidyverse)
+library(janitor)
+```
+
+The following code reads the raw IMDb data directly from source and cleans it. 
+These chunks are set to `eval: false` so the data is not re-downloaded every time 
+this document is rendered — the cleaned files saved to `data-clean/` are used instead.
+
+```{r}
+#| label: read-raw-data
+#| eval: false
+
+basics <- read_tsv(
+  "https://datasets.imdbws.com/title.basics.tsv.gz",
+  na = "\\N",
+  show_col_types = FALSE
+)
+
+ratings <- read_tsv(
+  "https://datasets.imdbws.com/title.ratings.tsv.gz",
+  na = "\\N",
+  show_col_types = FALSE
+)
+```
+
+```{r}
+#| label: clean-and-save
+#| eval: false
+
+# Standardize column names
+basics <- basics |> clean_names()
+ratings <- ratings |> clean_names()
+
+# Filter to movies only, select relevant columns
+movies_selected <- basics |>
+  filter(title_type == "movie") |>
+  select(tconst, primary_title, start_year, runtime_minutes, genres)
+
+# Join with ratings
+movies_joined <- movies_selected |>
+  inner_join(ratings, by = "tconst")
+
+# Convert variables to correct types
+movies_clean <- movies_joined |>
+  mutate(
+    start_year      = as.numeric(start_year),
+    runtime_minutes = as.numeric(runtime_minutes),
+    average_rating  = as.numeric(average_rating),
+    num_votes       = as.numeric(num_votes)
+  )
+
+# Remove missing values and invalid records
+movies_clean <- movies_clean |>
+  filter(
+    !is.na(start_year),
+    !is.na(runtime_minutes),
+    !is.na(average_rating),
+    !is.na(num_votes),
+    !is.na(genres),
+    runtime_minutes > 0,
+    start_year >= 1920,
+    start_year <= 2024
+  )
+
+# Create new variables: decade, popularity group, rating group
+movies_clean <- movies_clean |>
+  mutate(
+    decade = start_year - (start_year %% 10),
+    popularity_group = case_when(
+      num_votes < 1000  ~ "Low",
+      num_votes < 10000 ~ "Medium",
+      TRUE              ~ "High"
+    ),
+    rating_group = case_when(
+      average_rating < 5 ~ "Low Rated",
+      average_rating < 7 ~ "Medium Rated",
+      TRUE               ~ "High Rated"
+    )
+  )
+
+# Expand genres into one row per genre per movie
+movies_genres <- movies_clean |>
+  separate_rows(genres, sep = ",") |>
+  distinct()
+
+# Remove duplicates from main dataset
+movies_clean <- movies_clean |> distinct()
+
+# Save cleaned data
+write_csv(movies_clean,  "data-clean/movies_clean.csv")
+write_csv(movies_genres, "data-clean/movies_by_genre.csv")
+```
+
+The data cleaning steps performed on the raw IMDb data include:
+
+- **Filtering**: Only movies were kept (TV shows, short films, and other types were removed). 
+  Records with missing values in key variables were also excluded, as were films released 
+  before 1920 or after 2024.
+- **Joining**: The basics and ratings datasets were merged using the shared title identifier (`tconst`), 
+  combining movie characteristics with audience ratings in a single table.
+- **Type conversion**: Release year, runtime, rating, and vote count were converted from text to numbers so they could be used in calculations and visualizations.
+- **New variables**: Three new grouping variables were created — decade of release, a popularity category based on vote counts (Low / Medium / High), and a rating category (Low Rated / Medium Rated / High Rated).
+- **Pivoting (separating rows)**: Because each movie can belong to multiple genres, the genre column was expanded so each movie–genre combination has its own row. This allows genre-level comparisons.
+- **Removing duplicates**: Duplicate records were removed from both the main and genre-level datasets.
+
+```{r}
+#| label: load-clean-data
+
+movies_clean  <- read_csv("data-clean/movies_clean.csv",
+                          show_col_types = FALSE)
+movies_genres <- read_csv("data-clean/movies_by_genre.csv",
+                          show_col_types = FALSE)
+```
+
+---
+
+## Visualization 1: Rating Distribution by Genre
+
+Not all movie genres are created equal when it comes to audience appreciation.The chart below shows how ratings are spread within each of the most common genres using only genres with at least 2,000 movies to ensure meaningful comparisons. Genres like Documentary and Biography tend to cluster toward higher ratings, while Horror shows a wider spread with many low-rated films pulling its 
+median down.
+
+```{r}
+#| label: viz1-genre-ratings
+
+top_genres <- movies_genres |>
+  count(genres) |>
+  filter(n >= 2000) |>
+  pull(genres)
+
+genre_plot_data <- movies_genres |>
+  filter(genres %in% top_genres)
+
+# Order genres by median rating
+genre_order <- genre_plot_data |>
+  group_by(genres) |>
+  summarise(med = median(average_rating, na.rm = TRUE)) |>
+  arrange(desc(med))
+
+genre_plot_data |>
+  mutate(genres = factor(genres, levels = genre_order$genres)) |>
+  ggplot(aes(x = average_rating, y = genres, fill = genres)) +
+  geom_boxplot(show.legend = FALSE)  +
+  labs(
+    title   = "How Do Movie Ratings Vary Across Genres?",
+    x       = "Genre",
+    y       = "IMDb Average Rating (1–10)",
+    caption = "Source: IMDb Non-Commercial Datasets (imdbws.com)"
+  ) +
+  theme_minimal()
+```
+
+---
+
+## Visualization 2: Movie Production Over Time
+
+The movie industry has changed dramatically over the past century. This line chart tracks how many movies were released each decade from the 1920s onward. Production was slow in the early era of cinema and grew steadily through the mid-20th century. The most striking pattern is the explosive growth in more recent decades. The 2000s and 2010s show the highest production 
+volumes ever recorded, likely reflecting both the globalization of filmmaking and the rise of streaming platforms expanding demand for content.
+```{r}
+#| include: false
+movies_per_decade <- movies_clean |>
+  filter(start_year >= 1920, start_year < 2020) |>
+  count(decade, name = "movie_count")
+```
+
+
+```{r}
+#| label: viz2-production-over-time
+
+movies_per_decade |>
+  ggplot(aes(x = decade, y = movie_count, group = 1)) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_point(aes(color = movie_count), size = 4) +
+  scale_color_viridis_c() +
+  labs(
+    title   = "The Rise of Film Production: Movies by Decade",
+    x       = "Decade",
+    y       = "Number of Movies Released",
+    caption = "Source: IMDb Non-Commercial Datasets (imdbws.com)"
+  ) +
+  theme_minimal()
+```
+
+---
+
+## Visualization 3: Popularity vs. Rating
+
+Does a movie becoming popular mean it's actually good? This scatter plot compares the number of audience votes (a proxy for how widely-seen a movie is) with its average rating. Each point represents a movie, colored by popularity group. Votes are shown on a logarithmic scale because the data ranges from just a handful to millions. The plot shows that low-popularity movies (purple, left) are spread across all rating levels, some great, some terrible. As movies get more votes (moving right), they tend to cluster between ratings 6–8. So popularity doesn't guarantee quality, but widely-seen movies rarely score very low
+
+```{r}
+#| label: votes-vs-rating
+
+movies_clean |>
+  mutate(popularity_group = factor(popularity_group,
+                                   levels = c("Low", "Medium", "High"))) |>
+  ggplot(aes(x = num_votes, y = average_rating, color = popularity_group)) +
+  geom_point(alpha = 0.3) +
+  scale_x_log10() +
+  scale_color_viridis_d() +
+  labs(
+    title   = "Does Popularity Predict Quality?",
+    x       = "Number of Votes (log scale)",
+    y       = "IMDb Average Rating (1–10)",
+    caption = "Source: IMDb Non-Commercial Datasets (imdbws.com)"
+  ) +
+  theme_minimal()
+```
+
+---
+
+## Visualization 4: Runtime and Audience Ratings
+
+Is there a sweet spot for how long a movie should be? This visualization uses jittered points to show how runtime relates to audience ratings, focusing on movies between 60 and 210 minutes (the vast majority of mainstream films). A smoothed trend line shows the general pattern. Movies shorter than about 80 minutes tend to receive more varied and slightly lower ratings, while films in the 90–150 minute range earn some of the highest scores. Very long films (over 180 minutes) also tend to rate highly, possibly because audiences seek them out specifically but the sample is smaller.
+
+```{r}
+#| label: runtime-vs-rating
+#| cache: true
+movies_clean |>
+  filter(runtime_minutes >= 60, runtime_minutes <= 210) |>
+  ggplot(aes(x = runtime_minutes, y = average_rating, color = average_rating)) +
+  geom_jitter(alpha = 0.2) +
+  geom_smooth(color = "red") +
+  scale_color_viridis_c() +
+  labs(
+    title   = "Does Runtime Affect How Audiences Rate Movies?",
+    x       = "Runtime (minutes)",
+    y       = "IMDb Average Rating (1–10)",
+    caption = "Source: IMDb Non-Commercial Datasets (imdbws.com)"
+  ) +
+  theme_minimal()
+```
+
+---
+
+## Conclusion
+
+This analysis of IMDb data reveals several interesting patterns in the movie industry:
+
+- **Genre matters** for ratings: Documentary and Biography films tend to earn the highest median ratings, while Horror and Thriller genres show much more variation, including many lower-rated films.
+- **Film production has exploded** over time, 2000s and 2010s produced far more movies than any previous era through a trend driven by globalization and digital distribution.
+- **Popular movies cluster in a quality band**: Widely-seen films (high vote counts) consistently earn ratings between 6 and 8, while obscure films show much wider variation in quality.
+- **Runtime has a modest relationship with ratings**: Movies in the 90–150 minute range tend to perform best with audiences, while very short films and very long films occupy niche positions.
+
+These findings could help filmmakers, studios, and streaming platforms make more informed decisions about content strategy though of course, success in film is shaped by many factors beyond what this dataset captures, such as marketing, cast, and cultural timing.
