@@ -9,6 +9,8 @@ website:
       - href: index.qmd
         text: Home
       - about.qmd
+      - href: imdb-project/portfolio_final.qmd
+        text: "IMDb Movie Analysis"
 
 format:
   html:
@@ -19,4 +21,3 @@ format:
     toc: true
 
 editor: source
-
